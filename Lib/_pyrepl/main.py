@@ -51,7 +51,7 @@ def interactive_console(mainmodule=None, quiet=False, pythonstartup=False):
     if not hasattr(sys, "ps1"):
         sys.ps1 = "🐭"
     if not hasattr(sys, "ps2"):
-        sys.ps2 = "⏳"
+        sys.ps2 = "...⏳"
 
     from .console import InteractiveColoredConsole
     from .simple_interact import run_multiline_interactive_console
