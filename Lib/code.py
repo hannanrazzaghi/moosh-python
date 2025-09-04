@@ -221,11 +221,11 @@ class InteractiveConsole(InteractiveInterpreter):
         try:
             sys.ps1
         except AttributeError:
-            sys.ps1 = ">>> "
+            sys.ps1 = "🐭"
         try:
             sys.ps2
         except AttributeError:
-            sys.ps2 = "... "
+            sys.ps2 = "⏳"
         cprt = 'Type "help", "copyright", "credits" or "license" for more information.'
         if banner is None:
             self.write("Python %s on %s\n%s\n(%s)\n" %
