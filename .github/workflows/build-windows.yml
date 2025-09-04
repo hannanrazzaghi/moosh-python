@@ -11,13 +11,17 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: Build
         run: |
           pcbuild\build.bat -p x64 -c Release
+
       - name: Package
         run: |
           mkdir dist
-          tar -czf dist/python-windows.tar.gz pcbuild\amd64
+          # Tar pcbuild\amd64 output separately to avoid issues
+          tar -czf dist/python-windows.tar.gz -C pcbuild amd64
+
       - uses: actions/upload-artifact@v4
         with:
           name: python-windows
