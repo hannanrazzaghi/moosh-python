@@ -18,7 +18,7 @@ jobs:
         run: |
           mkdir dist
           tar -czf dist/python-windows.tar.gz pcbuild\amd64
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: python-windows
           path: dist/python-windows.tar.gz

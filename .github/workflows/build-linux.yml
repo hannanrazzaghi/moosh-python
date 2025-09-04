@@ -21,7 +21,7 @@ jobs:
         run: |
           mkdir dist
           tar -czf dist/python-linux.tar.gz .
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: python-linux
           path: dist/python-linux.tar.gz
