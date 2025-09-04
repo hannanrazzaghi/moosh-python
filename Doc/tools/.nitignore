@@ -13,7 +13,6 @@ Doc/c-api/type.rst
 Doc/c-api/typeobj.rst
 Doc/library/ast.rst
 Doc/library/asyncio-extending.rst
-Doc/library/asyncio-policy.rst
 Doc/library/email.charset.rst
 Doc/library/email.parser.rst
 Doc/library/http.cookiejar.rst

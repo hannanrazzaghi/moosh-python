@@ -264,17 +264,19 @@ class Morsel(dict):
         "httponly" : "HttpOnly",
         "version"  : "Version",
         "samesite" : "SameSite",
+        "partitioned": "Partitioned",
     }
 
-    _flags = {'secure', 'httponly'}
+    _reserved_defaults = dict.fromkeys(_reserved, "")
+
+    _flags = {'secure', 'httponly', 'partitioned'}
 
     def __init__(self):
         # Set defaults
         self._key = self._value = self._coded_value = None
 
         # Set default attributes
-        for key in self._reserved:
-            dict.__setitem__(self, key, "")
+        dict.update(self, self._reserved_defaults)
 
     @property
     def key(self):
@@ -424,7 +426,7 @@ _CookiePattern = re.compile(r"""
     (                              # Optional group: there may not be a value.
     \s*=\s*                          # Equal Sign
     (?P<val>                         # Start of group 'val'
-    "(?:[^\\"]|\\.)*"                  # Any double-quoted string
+    "(?:\\"|.)*?"                    # Any double-quoted string
     |                                  # or
     # Special case for "expires" attr
     (\w{3,6}day|\w{3}),\s              # Day of the week or abbreviated day

@@ -42,7 +42,7 @@ The :mod:`locale` module defines the following exception and functions:
    If *locale* is a pair, it is converted to a locale name using
    the locale aliasing engine.
    The language code has the same format as a :ref:`locale name <locale_name>`,
-   but without encoding and ``@``-modifier.
+   but without encoding.
    The language code and encoding can be ``None``.
 
    If *locale* is omitted or ``None``, the current setting for *category* is
@@ -57,6 +57,9 @@ The :mod:`locale` module defines the following exception and functions:
    This sets the locale for all categories to the user's default setting (typically
    specified in the :envvar:`LANG` environment variable).  If the locale is not
    changed thereafter, using multithreading should not cause problems.
+
+   .. versionchanged:: next
+      Support language codes with ``@``-modifiers.
 
 
 .. function:: localeconv()
@@ -322,6 +325,15 @@ The :mod:`locale` module defines the following exception and functions:
       to represent the values 0 to 99 in a locale-specific way.
       In most locales this is an empty string.
 
+   The function temporarily sets the ``LC_CTYPE`` locale to the locale
+   of the category that determines the requested value (``LC_TIME``,
+   ``LC_NUMERIC``, ``LC_MONETARY`` or ``LC_MESSAGES``) if locales are
+   different and the resulting string is non-ASCII.
+   This temporary change affects other threads.
+
+   .. versionchanged:: 3.14
+      The function now temporarily sets the ``LC_CTYPE`` locale in some cases.
+
 
 .. function:: getdefaultlocale([envvars])
 
@@ -357,10 +369,14 @@ The :mod:`locale` module defines the following exception and functions:
    values except :const:`LC_ALL`.  It defaults to :const:`LC_CTYPE`.
 
    The language code has the same format as a :ref:`locale name <locale_name>`,
-   but without encoding and ``@``-modifier.
+   but without encoding.
    The language code and encoding may be ``None`` if their values cannot be
    determined.
    The "C" locale is represented as ``(None, None)``.
+
+   .. versionchanged:: next
+      ``@``-modifier are no longer silently removed, but included in
+      the language code.
 
 
 .. function:: getpreferredencoding(do_setlocale=True)

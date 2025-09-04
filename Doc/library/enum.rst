@@ -665,7 +665,7 @@ Data Types
       of two, starting with ``1``.
 
    .. versionchanged:: 3.11 The *repr()* of zero-valued flags has changed.  It
-      is now::
+      is now:
 
          >>> Color(0) # doctest: +SKIP
          <Color: 0>
@@ -697,7 +697,7 @@ Data Types
    * the result is a valid *IntFlag*: an *IntFlag* is returned
    * the result is not a valid *IntFlag*: the result depends on the :class:`FlagBoundary` setting
 
-   The :func:`repr` of unnamed zero-valued flags has changed.  It is now:
+   The :func:`repr` of unnamed zero-valued flags has changed.  It is now::
 
       >>> Color(0)
       <Color: 0>
@@ -1021,6 +1021,7 @@ Utilities and Decorators
    Should only be used when the enum members are exported
    to the module global namespace (see :class:`re.RegexFlag` for an example).
 
+
    .. versionadded:: 3.11
 
 .. function:: show_flag_values(value)
@@ -1028,7 +1029,6 @@ Utilities and Decorators
    Return a list of all power-of-two integers contained in a flag *value*.
 
    .. versionadded:: 3.11
-
 
 ---------------
 

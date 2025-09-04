@@ -18,6 +18,10 @@
  */
 #ifdef AF_BTH
 # include <ws2bth.h>
+# ifdef __clang__
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wpragma-pack"
+# endif
 # include <pshpack1.h>
 
 /*
@@ -51,7 +55,10 @@ struct SOCKADDR_BTH_REDEF {
 
 };
 # include <poppack.h>
-#endif
+# ifdef __clang__
+#  pragma clang diagnostic pop
+# endif
+#endif /* AF_BTH */
 
 /* Windows 'supports' CMSG_LEN, but does not follow the POSIX standard
  * interface at all, so there is no point including the code that
@@ -175,6 +182,10 @@ typedef int socklen_t;
 # undef AF_VSOCK
 #endif
 
+#ifdef HAVE_LINUX_NETFILTER_IPV4_H
+# include <linux/netfilter_ipv4.h>
+#endif
+
 #ifdef HAVE_SOCKADDR_ALG
 
 # include <linux/if_alg.h>
@@ -255,7 +266,7 @@ typedef int SOCKET_T;
 #endif
 
 // AF_HYPERV is only supported on Windows
-#if defined(AF_HYPERV) && defined(MS_WINDOWS)
+#if defined(AF_HYPERV) && (defined(MS_WINDOWS_APP) || defined(MS_WINDOWS_SYSTEM))
 #  define HAVE_AF_HYPERV
 #endif
 
@@ -332,6 +343,9 @@ typedef struct {
     PyTime_t sock_timeout;     /* Operation timeout in seconds;
                                         0.0 means non-blocking */
     struct _socket_state *state;
+#ifdef MS_WINDOWS
+    int quickack;
+#endif
 } PySocketSockObject;
 
 /* --- C API ----------------------------------------------------*/

@@ -357,7 +357,7 @@ New Syntax
   provides a standardized way of annotating a function's parameters
   and return value.  There are no semantics attached to such
   annotations except that they can be introspected at runtime using
-  the :attr:`!__annotations__` attribute.  The intent is to
+  the :attr:`~object.__annotations__` attribute.  The intent is to
   encourage experimentation through metaclasses, decorators or frameworks.
 
 * :pep:`3102`: Keyword-only arguments.  Named parameters occurring
@@ -870,7 +870,7 @@ to the C API.
 * :c:func:`!PyNumber_Coerce`, :c:func:`!PyNumber_CoerceEx`,
   :c:func:`!PyMember_Get`, and :c:func:`!PyMember_Set` C APIs are removed.
 
-* New C API :c:func:`PyImport_ImportModuleNoBlock`, works like
+* New C API :c:func:`!PyImport_ImportModuleNoBlock`, works like
   :c:func:`PyImport_ImportModule` but won't block on the import lock
   (returning an error instead).
 

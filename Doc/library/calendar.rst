@@ -173,17 +173,20 @@ interpreted as prescribed by the ISO 8601 standard.  Year 0 is 1 BC, year -1 is
       on the first weekday as specified in the constructor or set by the
       :meth:`setfirstweekday` method.
 
+
    .. method:: formatweekday(weekday, width)
 
       Return a string representing the name of a single weekday formatted to
       the specified *width*. The *weekday* parameter is an integer representing
       the day of the week, where ``0`` is Monday and ``6`` is Sunday.
 
+
    .. method:: formatweekheader(width)
 
       Return a string containing the header row of weekday names, formatted
       with the given *width* for each column. The names depend on the locale
       settings and are padded to the specified width.
+
 
    .. method:: formatmonth(theyear, themonth, w=0, l=0)
 
@@ -193,12 +196,14 @@ interpreted as prescribed by the ISO 8601 standard.  Year 0 is 1 BC, year -1 is
       on the first weekday as specified in the constructor or set by the
       :meth:`setfirstweekday` method.
 
+
    .. method:: formatmonthname(theyear, themonth, width=0, withyear=True)
 
       Return a string representing the month's name centered within the
       specified *width*. If *withyear* is ``True``, include the year in the
       output. The *theyear* and *themonth* parameters specify the year
       and month for the name to be formatted respectively.
+
 
    .. method:: prmonth(theyear, themonth, w=0, l=0)
 
@@ -246,7 +251,7 @@ interpreted as prescribed by the ISO 8601 standard.  Year 0 is 1 BC, year -1 is
       3) specifies the number of months per row. *css* is the name for the
       cascading style sheet to be used. :const:`None` can be passed if no style
       sheet should be used. *encoding* specifies the encoding to be used for the
-      output (defaulting to the system default encoding).
+      output (defaulting to ``'utf-8'``).
 
 
    .. method:: formatmonthname(theyear, themonth, withyear=True)
@@ -496,6 +501,14 @@ The :mod:`calendar` module exports the following data attributes:
        >>> list(calendar.month_name)
        ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
+   .. caution::
+
+      In locales with alternative month names forms, the :data:`!month_name` sequence
+      may not be suitable when a month name stands by itself and not as part of a date.
+      For instance, in Greek and in many Slavic and Baltic languages, :data:`!month_name`
+      will produce the month in genitive case. Use :data:`standalone_month_name` for a form
+      suitable for standalone use.
+
 
 .. data:: month_abbr
 
@@ -506,6 +519,31 @@ The :mod:`calendar` module exports the following data attributes:
        >>> import calendar
        >>> list(calendar.month_abbr)
        ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+   .. caution::
+
+      In locales with alternative month names forms, the :data:`!month_abbr` sequence
+      may not be suitable when a month name stands by itself and not as part of a date.
+      Use :data:`standalone_month_abbr` for a form suitable for standalone use.
+
+
+.. data:: standalone_month_name
+
+   A sequence that represents the months of the year in the current locale
+   in the standalone form if the locale provides one. Else it is equivalent
+   to :data:`month_name`.
+
+   .. versionadded:: next
+
+
+.. data:: standalone_month_abbr
+
+   A sequence that represents the abbreviated months of the year in the current
+   locale in the standalone form if the locale provides one. Else it is
+   equivalent to :data:`month_abbr`.
+
+   .. versionadded:: next
+
 
 .. data:: JANUARY
           FEBRUARY
@@ -569,7 +607,7 @@ The :mod:`calendar` module defines the following exceptions:
 
 .. _calendar-cli:
 
-Command-Line Usage
+Command-line usage
 ------------------
 
 .. versionadded:: 2.5
@@ -707,6 +745,9 @@ The following options are accepted:
    The number of months printed per row.
    Defaults to 3.
 
+.. versionchanged:: 3.14
+   By default, today's date is highlighted in color and can be
+   :ref:`controlled using environment variables <using-on-controlling-color>`.
 
 *HTML-mode options:*
 

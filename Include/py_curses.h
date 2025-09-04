@@ -82,8 +82,6 @@ typedef struct PyCursesWindowObject {
     struct PyCursesWindowObject *orig;
 } PyCursesWindowObject;
 
-#define PyCursesWindow_Check(v) Py_IS_TYPE((v), &PyCursesWindow_Type)
-
 #define PyCurses_CAPSULE_NAME "_curses._C_API"
 
 
@@ -100,6 +98,8 @@ static void **PyCurses_API;
 #define PyCursesInitialised      {if (! ((int (*)(void))PyCurses_API[2]) () ) return NULL;}
 #define PyCursesInitialisedColor {if (! ((int (*)(void))PyCurses_API[3]) () ) return NULL;}
 
+#define PyCursesWindow_Check(v)     Py_IS_TYPE((v), &PyCursesWindow_Type)
+
 #define import_curses() \
     PyCurses_API = (void **)PyCapsule_Import(PyCurses_CAPSULE_NAME, 1);
 
@@ -108,6 +108,13 @@ static void **PyCurses_API;
 /* general error messages */
 static const char catchall_ERR[]  = "curses function returned ERR";
 static const char catchall_NULL[] = "curses function returned NULL";
+
+#if defined(CURSES_MODULE) || defined(CURSES_PANEL_MODULE)
+/* Error messages shared by the curses package */
+#  define CURSES_ERROR_FORMAT           "%s() returned %s"
+#  define CURSES_ERROR_VERBOSE_FORMAT   "%s() (called by %s()) returned %s"
+#  define CURSES_ERROR_MUST_CALL_FORMAT "must call %s() first"
+#endif
 
 #ifdef __cplusplus
 }

@@ -188,24 +188,6 @@ Cross platform
       :attr:`processor` is resolved late instead of immediately.
 
 
-Java platform
--------------
-
-
-.. function:: java_ver(release='', vendor='', vminfo=('','',''), osinfo=('','',''))
-
-   Version interface for Jython.
-
-   Returns a tuple ``(release, vendor, vminfo, osinfo)`` with *vminfo* being a
-   tuple ``(vm_name, vm_release, vm_vendor)`` and *osinfo* being a tuple
-   ``(os_name, os_version, os_arch)``. Values which cannot be determined are set to
-   the defaults given as parameters (which all default to ``''``).
-
-   .. deprecated-removed:: 3.13 3.15
-      It was largely untested, had a confusing API,
-      and was only useful for Jython support.
-
-
 Windows platform
 ----------------
 
@@ -388,3 +370,14 @@ The following options are accepted:
 You can also pass one or more positional arguments (``terse``, ``nonaliased``)
 to explicitly control the output format. These behave similarly to their
 corresponding options.
+
+Miscellaneous
+-------------
+
+.. function:: invalidate_caches()
+
+   Clear out the internal cache of information, such as the :func:`uname`.
+   This is typically useful when the platform's :func:`node` is changed
+   by an external process and one needs to retrieve the updated value.
+
+   .. versionadded:: 3.14

@@ -5,7 +5,6 @@ but random access is not allowed."""
 
 # based on Andrew Kuchling's minigzip.py distributed with the zlib module
 
-import _compression
 import builtins
 import io
 import os
@@ -14,6 +13,7 @@ import sys
 import time
 import weakref
 import zlib
+from compression._common import _streams
 
 __all__ = ["BadGzipFile", "GzipFile", "open", "compress", "decompress"]
 
@@ -30,7 +30,7 @@ READ_BUFFER_SIZE = 128 * 1024
 _WRITE_BUFFER_SIZE = 4 * io.DEFAULT_BUFFER_SIZE
 
 
-def open(filename, mode="rb", compresslevel=_COMPRESS_LEVEL_BEST,
+def open(filename, mode="rb", compresslevel=_COMPRESS_LEVEL_TRADEOFF,
          encoding=None, errors=None, newline=None):
     """Open a gzip-compressed file in binary or text mode.
 
@@ -144,7 +144,7 @@ class _WriteBufferStream(io.RawIOBase):
         return True
 
 
-class GzipFile(_compression.BaseStream):
+class GzipFile(_streams.BaseStream):
     """The GzipFile class simulates most of the methods of a file object with
     the exception of the truncate() method.
 
@@ -158,7 +158,7 @@ class GzipFile(_compression.BaseStream):
     myfileobj = None
 
     def __init__(self, filename=None, mode=None,
-                 compresslevel=_COMPRESS_LEVEL_BEST, fileobj=None, mtime=None):
+                 compresslevel=_COMPRESS_LEVEL_TRADEOFF, fileobj=None, mtime=None):
         """Constructor for the GzipFile class.
 
         At least one of fileobj and filename must be given a
@@ -192,6 +192,11 @@ class GzipFile(_compression.BaseStream):
         to generate a compressed stream that does not depend on creation time.
 
         """
+
+        # Ensure attributes exist at __del__
+        self.mode = None
+        self.fileobj = None
+        self._buffer = None
 
         if mode and ('t' in mode or 'U' in mode):
             raise ValueError("Invalid mode: {!r}".format(mode))
@@ -263,8 +268,6 @@ class GzipFile(_compression.BaseStream):
         self.name = filename
         self.crc = zlib.crc32(b"")
         self.size = 0
-        self.writebuf = []
-        self.bufsize = 0
         self.offset = 0  # Current file offset for seek(), tell(), etc
 
     def tell(self):
@@ -332,11 +335,15 @@ class GzipFile(_compression.BaseStream):
 
         return length
 
-    def read(self, size=-1):
-        self._check_not_closed()
+    def _check_read(self, caller):
         if self.mode != READ:
             import errno
-            raise OSError(errno.EBADF, "read() on write-only GzipFile object")
+            msg = f"{caller}() on write-only GzipFile object"
+            raise OSError(errno.EBADF, msg)
+
+    def read(self, size=-1):
+        self._check_not_closed()
+        self._check_read("read")
         return self._buffer.read(size)
 
     def read1(self, size=-1):
@@ -344,19 +351,25 @@ class GzipFile(_compression.BaseStream):
 
         Reads up to a buffer's worth of data if size is negative."""
         self._check_not_closed()
-        if self.mode != READ:
-            import errno
-            raise OSError(errno.EBADF, "read1() on write-only GzipFile object")
+        self._check_read("read1")
 
         if size < 0:
             size = io.DEFAULT_BUFFER_SIZE
         return self._buffer.read1(size)
 
+    def readinto(self, b):
+        self._check_not_closed()
+        self._check_read("readinto")
+        return self._buffer.readinto(b)
+
+    def readinto1(self, b):
+        self._check_not_closed()
+        self._check_read("readinto1")
+        return self._buffer.readinto1(b)
+
     def peek(self, n):
         self._check_not_closed()
-        if self.mode != READ:
-            import errno
-            raise OSError(errno.EBADF, "peek() on write-only GzipFile object")
+        self._check_read("peek")
         return self._buffer.peek(n)
 
     @property
@@ -365,7 +378,9 @@ class GzipFile(_compression.BaseStream):
 
     def close(self):
         fileobj = self.fileobj
-        if fileobj is None or self._buffer.closed:
+        if fileobj is None:
+            return
+        if self._buffer is None or self._buffer.closed:
             return
         try:
             if self.mode == WRITE:
@@ -445,6 +460,13 @@ class GzipFile(_compression.BaseStream):
         self._check_not_closed()
         return self._buffer.readline(size)
 
+    def __del__(self):
+        if self.mode == WRITE and not self.closed:
+            import warnings
+            warnings.warn("unclosed GzipFile",
+                          ResourceWarning, source=self, stacklevel=2)
+
+        super().__del__()
 
 def _read_exact(fp, n):
     '''Read exactly *n* bytes from `fp`
@@ -499,7 +521,7 @@ def _read_gzip_header(fp):
     return last_mtime
 
 
-class _GzipReader(_compression.DecompressReader):
+class _GzipReader(_streams.DecompressReader):
     def __init__(self, fp):
         super().__init__(_PaddedFile(fp), zlib._ZlibDecompressor,
                          wbits=-zlib.MAX_WBITS)
@@ -597,12 +619,12 @@ class _GzipReader(_compression.DecompressReader):
         self._new_member = True
 
 
-def compress(data, compresslevel=_COMPRESS_LEVEL_BEST, *, mtime=None):
+def compress(data, compresslevel=_COMPRESS_LEVEL_TRADEOFF, *, mtime=0):
     """Compress data in one shot and return the compressed string.
 
     compresslevel sets the compression level in range of 0-9.
-    mtime can be used to set the modification time. The modification time is
-    set to the current time by default.
+    mtime can be used to set the modification time.
+    The modification time is set to 0 by default, for reproducibility.
     """
     # Wbits=31 automatically includes a gzip header and trailer.
     gzip_data = zlib.compress(data, level=compresslevel, wbits=31)
@@ -643,7 +665,9 @@ def main():
     from argparse import ArgumentParser
     parser = ArgumentParser(description=
         "A simple command line interface for the gzip module: act like gzip, "
-        "but do not delete the input file.")
+        "but do not delete the input file.",
+        color=True,
+    )
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--fast', action='store_true', help='compress faster')
     group.add_argument('--best', action='store_true', help='compress better')

@@ -30,6 +30,9 @@ Any files may be present in the ZIP archive, but importers are only invoked for
 corresponding :file:`.pyc` file, meaning that if a ZIP archive
 doesn't contain :file:`.pyc` files, importing may be rather slow.
 
+.. versionchanged:: next
+   Zstandard (*zstd*) compressed zip file entries are supported.
+
 .. versionchanged:: 3.13
    ZIP64 is supported
 
@@ -140,17 +143,6 @@ zipimporter Objects
 
       Return ``True`` if the module specified by *fullname* is a package. Raise
       :exc:`ZipImportError` if the module couldn't be found.
-
-
-   .. method:: load_module(fullname)
-
-      Load the module specified by *fullname*. *fullname* must be the fully
-      qualified (dotted) module name. Returns the imported module on success,
-      raises :exc:`ZipImportError` on failure.
-
-      .. deprecated:: 3.10
-
-         Use :meth:`exec_module` instead.
 
 
    .. method:: invalidate_caches()

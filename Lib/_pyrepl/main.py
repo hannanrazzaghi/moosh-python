@@ -1,6 +1,7 @@
 import errno
 import os
 import sys
+import types
 
 
 CAN_USE_PYREPL: bool
@@ -29,12 +30,10 @@ def interactive_console(mainmodule=None, quiet=False, pythonstartup=False):
             print(FAIL_REASON, file=sys.stderr)
         return sys._baserepl()
 
-    if mainmodule:
-        namespace = mainmodule.__dict__
-    else:
-        import __main__
-        namespace = __main__.__dict__
-        namespace.pop("__pyrepl_interactive_console", None)
+    if not mainmodule:
+        mainmodule = types.ModuleType("__main__")
+
+    namespace = mainmodule.__dict__
 
     # sys._baserepl() above does this internally, we do it here
     startup_path = os.getenv("PYTHONSTARTUP")
@@ -49,9 +48,9 @@ def interactive_console(mainmodule=None, quiet=False, pythonstartup=False):
     # set sys.{ps1,ps2} just before invoking the interactive interpreter. This
     # mimics what CPython does in pythonrun.c
     if not hasattr(sys, "ps1"):
-        sys.ps1 = "🐭"
+        sys.ps1 = ">>> "
     if not hasattr(sys, "ps2"):
-        sys.ps2 = "...⏳"
+        sys.ps2 = "... "
 
     from .console import InteractiveColoredConsole
     from .simple_interact import run_multiline_interactive_console

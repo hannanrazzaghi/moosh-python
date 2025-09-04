@@ -33,16 +33,17 @@ PyAPI_FUNC(unsigned long) PyThread_start_new_thread(void (*)(void *), void *);
  * destructors.
  *
  * In either case there is a risk of invalid references remaining to data on the
- * thread stack.  This is deprecated in 3.14 onwards.  Retained for API compat.
+ * thread stack.
  */
-PyAPI_FUNC(void) _Py_NO_RETURN PyThread_exit_thread(void);
+Py_DEPRECATED(3.14) PyAPI_FUNC(void) _Py_NO_RETURN PyThread_exit_thread(void);
 
 PyAPI_FUNC(unsigned long) PyThread_get_thread_ident(void);
 
 #if (defined(__APPLE__) || defined(__linux__) || defined(_WIN32) \
      || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) \
      || defined(__OpenBSD__) || defined(__NetBSD__) \
-     || defined(__DragonFly__) || defined(_AIX))
+     || defined(__DragonFly__) || defined(_AIX) \
+     || (defined(__sun__) && SIZEOF_LONG >= 8))
 #define PY_HAVE_THREAD_NATIVE_ID
 PyAPI_FUNC(unsigned long) PyThread_get_thread_native_id(void);
 #endif

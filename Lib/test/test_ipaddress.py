@@ -2214,12 +2214,18 @@ class IpaddrUnitTest(unittest.TestCase):
                           ipaddress.ip_address('ffff::c0a8:ffff%scope'))
 
     def testIPVersion(self):
+        self.assertEqual(ipaddress.IPv4Address.version, 4)
+        self.assertEqual(ipaddress.IPv6Address.version, 6)
+
         self.assertEqual(self.ipv4_address.version, 4)
         self.assertEqual(self.ipv6_address.version, 6)
         self.assertEqual(self.ipv6_scoped_address.version, 6)
         self.assertEqual(self.ipv6_with_ipv4_part.version, 6)
 
     def testMaxPrefixLength(self):
+        self.assertEqual(ipaddress.IPv4Address.max_prefixlen, 32)
+        self.assertEqual(ipaddress.IPv6Address.max_prefixlen, 128)
+
         self.assertEqual(self.ipv4_interface.max_prefixlen, 32)
         self.assertEqual(self.ipv6_interface.max_prefixlen, 128)
         self.assertEqual(self.ipv6_scoped_interface.max_prefixlen, 128)
@@ -2262,6 +2268,10 @@ class IpaddrUnitTest(unittest.TestCase):
                 '224.1.1.1/31').is_multicast)
         self.assertEqual(False, ipaddress.ip_network('240.0.0.0').is_multicast)
         self.assertEqual(True, ipaddress.ip_network('240.0.0.0').is_reserved)
+
+        self.assertTrue(ipaddress.ip_interface('0.0.0.0/32').is_unspecified)
+        self.assertFalse(ipaddress.ip_interface('0.0.0.0/31').is_unspecified)
+        self.assertFalse(ipaddress.ip_interface('1.2.3.4/32').is_unspecified)
 
         self.assertEqual(True, ipaddress.ip_interface(
                 '192.168.1.1/17').is_private)

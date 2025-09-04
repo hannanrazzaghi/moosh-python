@@ -61,11 +61,14 @@
 #include "pycore_ceval.h"         // _PyPerf_Callbacks
 #include "pycore_frame.h"
 #include "pycore_interp.h"
+#include "pycore_runtime.h"       // _PyRuntime
 
 #ifdef PY_HAVE_PERF_TRAMPOLINE
 
 /* Standard library includes for perf jitdump implementation */
-#include <elf.h>                  // ELF architecture constants
+#if defined(__linux__)
+#  include <elf.h>                // ELF architecture constants
+#endif
 #include <fcntl.h>                // File control operations
 #include <stdio.h>                // Standard I/O operations
 #include <stdlib.h>               // Standard library functions
@@ -73,7 +76,9 @@
 #include <sys/types.h>            // System data types
 #include <unistd.h>               // System calls (sysconf, getpid)
 #include <sys/time.h>             // Time functions (gettimeofday)
-#include <sys/syscall.h>          // System call interface
+#if defined(__linux__)
+#  include <sys/syscall.h>        // System call interface
+#endif
 
 // =============================================================================
 //                           CONSTANTS AND CONFIGURATION
@@ -99,6 +104,22 @@
  * The padding size is now calculated automatically during initialization
  * based on the actual unwind information requirements.
  */
+
+
+/* These constants are defined inside <elf.h>, which we can't use outside of linux. */
+#if !defined(__linux__)
+#  if defined(__i386__) || defined(_M_IX86)
+#    define EM_386      3
+#  elif defined(__arm__) || defined(_M_ARM)
+#    define EM_ARM      40
+#  elif defined(__x86_64__) || defined(_M_X64)
+#    define EM_X86_64   62
+#  elif defined(__aarch64__)
+#    define EM_AARCH64  183
+#  elif defined(__riscv)
+#    define EM_RISCV    243
+#  endif
+#endif
 
 /* Convenient access to the global trampoline API state */
 #define trampoline_api _PyRuntime.ceval.perf.trampoline_api
@@ -193,7 +214,11 @@ struct BaseEvent {
 typedef struct {
     struct BaseEvent base;   // Common event header
     uint32_t process_id;     // Process ID where code was generated
+#if defined(__APPLE__)
+    uint64_t thread_id;      // Thread ID where code was generated
+#else
     uint32_t thread_id;      // Thread ID where code was generated
+#endif
     uint64_t vma;            // Virtual memory address where code is loaded
     uint64_t code_address;   // Address of the actual machine code
     uint64_t code_size;      // Size of the machine code in bytes
@@ -1034,6 +1059,10 @@ static void* perf_map_jit_init(void) {
         return NULL;  // Failed to get page size
     }
 
+#if defined(__APPLE__)
+    // On macOS, samply uses a preload to find jitdumps and this mmap can be slow.
+    perf_jit_map_state.mapped_buffer = NULL;
+#else
     /*
      * Map the first page of the jitdump file
      *
@@ -1056,6 +1085,7 @@ static void* perf_map_jit_init(void) {
         close(fd);
         return NULL;  // Memory mapping failed
     }
+#endif
 
     perf_jit_map_state.mapped_size = page_size;
 
@@ -1098,6 +1128,7 @@ static void* perf_map_jit_init(void) {
     size_t eh_frame_size = calculate_eh_frame_size();
     size_t unwind_data_size = sizeof(EhFrameHeader) + eh_frame_size;
     trampoline_api.code_padding = round_up(unwind_data_size, 16);
+    trampoline_api.code_alignment = 32;
 
     return &perf_jit_map_state;
 }
@@ -1261,7 +1292,11 @@ static void perf_map_jit_write_entry(void *state, const void *code_addr,
     ev.base.size = sizeof(ev) + (name_length+1) + size;
     ev.base.time_stamp = get_current_monotonic_ticks();
     ev.process_id = getpid();
+#if defined(__APPLE__)
+    pthread_threadid_np(NULL, &ev.thread_id);
+#else
     ev.thread_id = syscall(SYS_gettid);  // Get thread ID via system call
+#endif
     ev.vma = base;                       // Virtual memory address
     ev.code_address = base;              // Same as VMA for our use case
     ev.code_size = size;

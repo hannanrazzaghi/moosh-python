@@ -6,12 +6,7 @@ import tokenize
 import traceback
 from abc import abstractmethod
 from collections.abc import Callable
-from typing import (
-    Any,
-    ClassVar,
-    TypeVar,
-    cast,
-)
+from typing import Any, ClassVar, TypeVar, cast
 
 from pegen.tokenizer import Mark, Tokenizer, exact_token_types
 
@@ -208,6 +203,36 @@ class Parser:
     def string(self) -> tokenize.TokenInfo | None:
         tok = self._tokenizer.peek()
         if tok.type == token.STRING:
+            return self._tokenizer.getnext()
+        return None
+
+    @memoize
+    def fstring_start(self) -> tokenize.TokenInfo | None:
+        FSTRING_START = getattr(token, "FSTRING_START", None)
+        if not FSTRING_START:
+            return None
+        tok = self._tokenizer.peek()
+        if tok.type == FSTRING_START:
+            return self._tokenizer.getnext()
+        return None
+
+    @memoize
+    def fstring_middle(self) -> tokenize.TokenInfo | None:
+        FSTRING_MIDDLE = getattr(token, "FSTRING_MIDDLE", None)
+        if not FSTRING_MIDDLE:
+            return None
+        tok = self._tokenizer.peek()
+        if tok.type == FSTRING_MIDDLE:
+            return self._tokenizer.getnext()
+        return None
+
+    @memoize
+    def fstring_end(self) -> tokenize.TokenInfo | None:
+        FSTRING_END = getattr(token, "FSTRING_END", None)
+        if not FSTRING_END:
+            return None
+        tok = self._tokenizer.peek()
+        if tok.type == FSTRING_END:
             return self._tokenizer.getnext()
         return None
 

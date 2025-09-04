@@ -436,13 +436,24 @@ The following exceptions are the exceptions that are usually raised.
    :exc:`PythonFinalizationError` during the Python finalization:
 
    * Creating a new Python thread.
-   * :func:`os.fork`.
+   * :meth:`Joining <threading.Thread.join>` a running daemon thread.
+   * :func:`os.fork`,
+   * acquiring a lock such as :class:`threading.Lock`, when it is known that
+     the operation would otherwise deadlock.
 
    See also the :func:`sys.is_finalizing` function.
 
    .. versionadded:: 3.13
       Previously, a plain :exc:`RuntimeError` was raised.
 
+   .. versionchanged:: 3.14
+
+      :meth:`threading.Thread.join` can now raise this exception.
+
+   .. versionchanged:: next
+
+      This exception may be raised when acquiring :meth:`threading.Lock`
+      or :meth:`threading.RLock`.
 
 .. exception:: RecursionError
 
@@ -658,9 +669,15 @@ The following exceptions are the exceptions that are usually raised.
 
        The first index of invalid data in :attr:`object`.
 
+       This value should not be negative as it is interpreted as an
+       absolute offset but this constraint is not enforced at runtime.
+
    .. attribute:: end
 
        The index after the last invalid data in :attr:`object`.
+
+       This value should not be negative as it is interpreted as an
+       absolute offset but this constraint is not enforced at runtime.
 
 
 .. exception:: UnicodeEncodeError

@@ -371,7 +371,7 @@ class TimeRE(dict):
             # W is set below by using 'U'
             'y': r"(?P<y>\d\d)",
             'Y': r"(?P<Y>\d\d\d\d)",
-            'z': r"(?P<z>[+-]\d\d:?[0-5]\d(:?[0-5]\d(\.\d{1,6})?)?|(?-i:Z))",
+            'z': r"(?P<z>([+-]\d\d:?[0-5]\d(:?[0-5]\d(\.\d{1,6})?)?)|(?-i:Z))?",
             'A': self.__seqToRE(self.locale_time.f_weekday, 'A'),
             'a': self.__seqToRE(self.locale_time.a_weekday, 'a'),
             'B': self.__seqToRE(_fixmonths(self.locale_time.f_month[1:]), 'B'),
@@ -472,7 +472,7 @@ class TimeRE(dict):
         if day_of_month_in_format and not year_in_format:
             import warnings
             warnings.warn("""\
-Parsing dates involving a day of month without a year specified is ambiguious
+Parsing dates involving a day of month without a year specified is ambiguous
 and fails to parse leap day. The default behavior will change in Python 3.15
 to either always raise an exception or to use a different default year (TBD).
 To avoid trouble, add a specific year to the input & format.
@@ -664,27 +664,28 @@ def _strptime(data_string, format="%a %b %d %H:%M:%S %Y"):
             iso_week = int(found_dict['V'])
         elif group_key == 'z':
             z = found_dict['z']
-            if z == 'Z':
-                gmtoff = 0
-            else:
-                if z[3] == ':':
-                    z = z[:3] + z[4:]
-                    if len(z) > 5:
-                        if z[5] != ':':
-                            msg = f"Inconsistent use of : in {found_dict['z']}"
-                            raise ValueError(msg)
-                        z = z[:5] + z[6:]
-                hours = int(z[1:3])
-                minutes = int(z[3:5])
-                seconds = int(z[5:7] or 0)
-                gmtoff = (hours * 60 * 60) + (minutes * 60) + seconds
-                gmtoff_remainder = z[8:]
-                # Pad to always return microseconds.
-                gmtoff_remainder_padding = "0" * (6 - len(gmtoff_remainder))
-                gmtoff_fraction = int(gmtoff_remainder + gmtoff_remainder_padding)
-                if z.startswith("-"):
-                    gmtoff = -gmtoff
-                    gmtoff_fraction = -gmtoff_fraction
+            if z:
+                if z == 'Z':
+                    gmtoff = 0
+                else:
+                    if z[3] == ':':
+                        z = z[:3] + z[4:]
+                        if len(z) > 5:
+                            if z[5] != ':':
+                                msg = f"Inconsistent use of : in {found_dict['z']}"
+                                raise ValueError(msg)
+                            z = z[:5] + z[6:]
+                    hours = int(z[1:3])
+                    minutes = int(z[3:5])
+                    seconds = int(z[5:7] or 0)
+                    gmtoff = (hours * 60 * 60) + (minutes * 60) + seconds
+                    gmtoff_remainder = z[8:]
+                    # Pad to always return microseconds.
+                    gmtoff_remainder_padding = "0" * (6 - len(gmtoff_remainder))
+                    gmtoff_fraction = int(gmtoff_remainder + gmtoff_remainder_padding)
+                    if z.startswith("-"):
+                        gmtoff = -gmtoff
+                        gmtoff_fraction = -gmtoff_fraction
         elif group_key == 'Z':
             # Since -1 is default value only need to worry about setting tz if
             # it can be something other than -1.
@@ -783,18 +784,40 @@ def _strptime_time(data_string, format="%a %b %d %H:%M:%S %Y"):
     tt = _strptime(data_string, format)[0]
     return time.struct_time(tt[:time._STRUCT_TM_ITEMS])
 
-def _strptime_datetime(cls, data_string, format="%a %b %d %H:%M:%S %Y"):
-    """Return a class cls instance based on the input string and the
+def _strptime_datetime_date(cls, data_string, format="%a %b %d %Y"):
+    """Return a date instance based on the input string and the
+    format string."""
+    tt, _, _ = _strptime(data_string, format)
+    args = tt[:3]
+    return cls(*args)
+
+def _parse_tz(tzname, gmtoff, gmtoff_fraction):
+    tzdelta = datetime_timedelta(seconds=gmtoff, microseconds=gmtoff_fraction)
+    if tzname:
+        return datetime_timezone(tzdelta, tzname)
+    else:
+        return datetime_timezone(tzdelta)
+
+def _strptime_datetime_time(cls, data_string, format="%H:%M:%S"):
+    """Return a time instance based on the input string and the
+    format string."""
+    tt, fraction, gmtoff_fraction = _strptime(data_string, format)
+    tzname, gmtoff = tt[-2:]
+    args = tt[3:6] + (fraction,)
+    if gmtoff is None:
+        return cls(*args)
+    else:
+        tz = _parse_tz(tzname, gmtoff, gmtoff_fraction)
+        return cls(*args, tz)
+
+def _strptime_datetime_datetime(cls, data_string, format="%a %b %d %H:%M:%S %Y"):
+    """Return a datetime instance based on the input string and the
     format string."""
     tt, fraction, gmtoff_fraction = _strptime(data_string, format)
     tzname, gmtoff = tt[-2:]
     args = tt[:6] + (fraction,)
-    if gmtoff is not None:
-        tzdelta = datetime_timedelta(seconds=gmtoff, microseconds=gmtoff_fraction)
-        if tzname:
-            tz = datetime_timezone(tzdelta, tzname)
-        else:
-            tz = datetime_timezone(tzdelta)
-        args += (tz,)
-
-    return cls(*args)
+    if gmtoff is None:
+        return cls(*args)
+    else:
+        tz = _parse_tz(tzname, gmtoff, gmtoff_fraction)
+        return cls(*args, tz)

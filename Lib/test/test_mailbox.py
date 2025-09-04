@@ -1,7 +1,6 @@
 import os
 import sys
 import time
-import stat
 import socket
 import email
 import email.message
@@ -9,7 +8,7 @@ import re
 import io
 import tempfile
 from test import support
-from test.support import import_helper
+from test.support import import_helper, warnings_helper
 from test.support import os_helper
 from test.support import refleak_helper
 from test.support import socket_helper
@@ -1214,6 +1213,7 @@ class _TestMboxMMDF(_TestSingleFile):
             self.assertEqual(contents, f.read())
         self._box = self._factory(self._path)
 
+    @warnings_helper.ignore_fork_in_thread_deprecation_warnings()
     @support.requires_fork()
     @unittest.skipUnless(hasattr(socket, 'socketpair'), "Test needs socketpair().")
     def test_lock_conflict(self):
