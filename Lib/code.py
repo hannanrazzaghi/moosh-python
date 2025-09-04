@@ -221,13 +221,13 @@ class InteractiveConsole(InteractiveInterpreter):
             sys.ps1
             delete_ps1_after = False
         except AttributeError:
-            sys.ps1 = ">>> "
+            sys.ps1 = "🐭 "
             delete_ps1_after = True
         try:
             sys.ps2
             delete_ps2_after = False
         except AttributeError:
-            sys.ps2 = "... "
+            sys.ps2 = "⏳⏳⏳"
             delete_ps2_after = True
 
         cprt = 'Type "help", "copyright", "credits" or "license" for more information.'

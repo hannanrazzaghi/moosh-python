@@ -1,0 +1,34 @@
+# .github/workflows/build-macos.yml
+name: Build macOS
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          brew install zlib bzip2 xz
+
+      - name: Configure
+        run: ./configure --enable-optimizations
+
+      - name: Build
+        run: make -j$(sysctl -n hw.ncpu)
+
+      - name: Package
+        run: |
+          mkdir -p dist
+          # Exclude dist folder to prevent "file changed as we read it" error
+          tar --exclude=dist -czf dist/python-macos.tar.gz .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-macos
+          path: dist/python-macos.tar.gz

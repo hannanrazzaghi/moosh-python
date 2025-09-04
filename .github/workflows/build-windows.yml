@@ -1,0 +1,28 @@
+# .github/workflows/build-windows.yml
+name: Build Windows
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build
+        run: |
+          pcbuild\build.bat -p x64 -c Release
+
+      - name: Package
+        run: |
+          mkdir dist
+          # Tar pcbuild\amd64 output separately to avoid issues
+          tar -czf dist/python-windows.tar.gz -C pcbuild amd64
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-windows
+          path: dist/python-windows.tar.gz
