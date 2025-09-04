@@ -1,0 +1,27 @@
+# .github/workflows/build-linux.yml
+name: Build Linux
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential libssl-dev zlib1g-dev libncurses5-dev libreadline-dev libsqlite3-dev libffi-dev libbz2-dev liblzma-dev tk-dev
+      - name: Configure
+        run: ./configure --enable-optimizations
+      - name: Build
+        run: make -j$(nproc)
+      - name: Package
+        run: |
+          mkdir dist
+          tar -czf dist/python-linux.tar.gz .
+      - uses: actions/upload-artifact@v3
+        with:
+          name: python-linux
+          path: dist/python-linux.tar.gz
